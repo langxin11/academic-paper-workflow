@@ -1,0 +1,3 @@
+# 将本文件复制为引擎目录下的 config.local.yaml，再填入你的 Vault 路径。
+# 路径可以是绝对路径，或相对于此配置文件的路径。
+vault: "~/Documents/Example Vault"

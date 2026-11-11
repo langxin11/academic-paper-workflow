@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "academic-paper-workflow"
+version = "0.1.0"
+description = "Portable Obsidian literature-review resources and agent skills"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["PyYAML>=6.0.2,<7"]
+
+[project.scripts]
+paper-flow = "academic_paper_workflow.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/academic_paper_workflow"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"core" = "academic_paper_workflow/data/core"
+"templates" = "academic_paper_workflow/data/templates"
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/core", "/templates", "/tests", "/config.example.yaml", "/README.md", "/docs", "/pyproject.toml", "/uv.lock", "/.python-version"]
