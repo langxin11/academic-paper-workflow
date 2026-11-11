@@ -1,8 +1,9 @@
-"""Public paper-flow commands for phase one."""
+"""Public commands for the academic reading workflow."""
 
 import argparse
 import sys
 
+from . import annotator, indexer
 from .config import resolve_vault
 from .resources import RESOURCES, VERSION, resource_text
 from .syncer import sync
@@ -22,12 +23,16 @@ def main(argv: list[str] | None = None) -> int:
     deploy = commands.add_parser("sync", help="预览或同步受管入口和正式模板")
     deploy.add_argument("--target", choices=["all", "antigravity", "codex", "claude"], default="all")
     deploy.add_argument("--check", action="store_true", help="只预览，待写入时退出码为 1")
+    indexer.register(commands.add_parser("index", help="重建文献台账、登记精读笔记"))
+    annotator.register(commands.add_parser("annotate", help="预检引文并安全写入 PDF 内嵌批注"))
     args = parser.parse_args(argv)
     try:
         if args.command == "show":
             sys.stdout.write(resource_text(args.resource))
             return 0
-        return sync(resolve_vault(args.vault), args.target, args.check)
+        if args.command == "sync":
+            return sync(resolve_vault(args.vault), args.target, args.check)
+        return args.handler(args)
     except (OSError, ValueError, RuntimeError) as error:
         print(f"paper-flow: {error}", file=sys.stderr)
         return 2

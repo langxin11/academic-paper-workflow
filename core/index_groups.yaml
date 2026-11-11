@@ -1,0 +1,21 @@
+# Legacy Vault project aliases; override or extend with index.group_aliases.
+tactile-grasping: 触觉抓取与力控
+tactile-force-control: 触觉抓取与力控
+tactile-friction-control: 触觉抓取与力控
+grasping-force-control: 触觉抓取与力控
+gentle-grasping: 触觉抓取与力控
+tactile-force-aware-robot-learning: 触觉学习
+tactile-embodied: 触觉学习
+teleoperation-rl: 触觉学习
+tactile-representation: 触觉感知与表征
+tactile-perception: 触觉感知与表征
+tactile-sensing: 触觉感知与表征
+active-disturbance-rejection-control: ADRC 与执行器控制
+force-perception-and-actuation: ADRC 与执行器控制
+sim-to-real-manipulation: 仿真、基准与 sim-to-real
+contact-rich-manipulation-and-simulation: 仿真、基准与 sim-to-real
+rl-infrastructure: 仿真、基准与 sim-to-real
+dexterous-benchmark: 仿真、基准与 sim-to-real
+motion-planning: 运动规划
+multi-robot-motion-planning: 运动规划
+gripper-mechanism-design: 机构设计

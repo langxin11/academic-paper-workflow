@@ -27,7 +27,11 @@ def checkout_root() -> Path | None:
 
 
 def resource_text(name: str) -> str:
-    relative = RESOURCES[name].split("/")
+    return resource_file_text(RESOURCES[name])
+
+
+def resource_file_text(relative: str) -> str:
+    """Read a bundled internal resource without adding a public show command."""
     checkout = checkout_root()
     root = checkout if checkout else files("academic_paper_workflow").joinpath("data")
-    return root.joinpath(*relative).read_text(encoding="utf-8")
+    return root.joinpath(*relative.split("/")).read_text(encoding="utf-8")

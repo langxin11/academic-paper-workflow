@@ -5,7 +5,7 @@ description: >-
   “给X做笔记”“处理这篇文献”“close reading”“read and take notes”；
   也适用于“给PDF加批注”“划线”“标注原文”的证据与语义规划，
   以及按需“文献一图流”“论文单页速览”。使用本地 PDF 或 Zotero/MinerU 材料，
-  逐项核查证据、区分【笔记推断】并维护人工索引。首版不提供自动 PDF 写回。
+  逐项核查证据、区分【笔记推断】并维护人工索引。支持可预检的六色 PDF 内嵌批注。
 ---
 
 # 文献工作流入口
@@ -50,4 +50,4 @@ paper-flow show one-pager-template
 
 按 note-prompt 完成实际材料核对、证据清单、十段笔记、原文复核和人工索引；图片存笔记同级相对 `assets/<paper-slug>/`。旧笔记保留组织。关键证据未闭环保留 `in-progress`，限定范围核实后才能 `done`；AI分析标 **【笔记推断】**。交付分别报告正文与索引结果。
 
-当前阶段的 `show`/`sync` 管理资源与入口。材料自动定位、MinerU 云解析、自动索引、PDF 批注写回及 Zotero 原生批注同步尚属后续实现，不调用不存在的命令或 Vault 私有脚本。用户请求批注时可生成语义与引文计划，明确是否真正修改 PDF；安全约定见 spec、checklist 和 note-prompt。
+写完笔记后用 `paper-flow --vault "<Vault>" index --note "<笔记的 Vault 相对路径>" --guide "<可检索的一句话导读>"` 登记人工入口并重建台账。需要写回 PDF 时先读色表及 `paper-flow annotate --help`，准备完整引文和稳定 ID，在目标 PDF 上运行 `annotate --pdf "<PDF>" --json "<计划>" --check`，核对定位后以相同参数去掉 `--check` 提交。按实际结果报告备份、跳过或失败项。详见 `paper-flow show note-prompt`。本地材料优先；MinerU 自动云解析属后续阶段。

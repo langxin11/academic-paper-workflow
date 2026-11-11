@@ -1,3 +1,13 @@
 # 将本文件复制为引擎目录下的 config.local.yaml，再填入你的 Vault 路径。
 # 路径可以是绝对路径，或相对于此配置文件的路径。
 vault: "~/Documents/Example Vault"
+
+# 以下为可选字段。Vault 内项目路径相对目标 Vault；备份路径相对本配置文件。
+# backup_dir: "../paper-flow-backups"
+# index:
+#   notes_dir: "文献研究/文献笔记"
+#   output: "文献研究/主题综述/文献笔记总索引（自动生成）.md"
+#   maintained_indexes:
+#     - "文献研究/主题综述/文献精读检索入口.md"
+#   group_aliases:
+#     motion-planning: "运动规划"
