@@ -3,6 +3,19 @@
 vault: "~/Documents/Example Vault"
 
 # 以下为可选字段。Vault 内项目路径相对目标 Vault；备份路径相对本配置文件。
+# 解析默认使用本地材料。请在已忽略的 config.local.yaml 填写真实 Token。
+# parse:
+#   api_key: ""
+#   mode: local
+#   zotero_data_dir: "~/Zotero"
+#   cache_dir: "~/.cache/paper-flow/mineru"
+#   results_dir: "../mineru-results"
+#   model_version: pipeline
+#   language: en
+#   is_ocr: false
+#   enable_formula: true
+#   enable_table: true
+#   wait_seconds: 600
 # backup_dir: "../paper-flow-backups"
 # index:
 #   notes_dir: "文献研究/文献笔记"

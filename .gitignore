@@ -6,3 +6,4 @@ build/
 *.egg-info/
 config.local.yaml
 .env
+/local/

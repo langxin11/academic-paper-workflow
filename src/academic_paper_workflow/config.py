@@ -27,8 +27,9 @@ def load_local_config() -> tuple[Path | None, dict]:
         return None, {}
     try:
         data = yaml.safe_load(config.read_text(encoding="utf-8-sig"))
-    except yaml.YAMLError as error:
-        raise ValueError(f"{config} 的 YAML 格式有误") from error
+    except yaml.YAMLError:
+        # A YAML diagnostic may quote a line containing the local API token.
+        raise ValueError(f"{config} 的 YAML 格式有误") from None
     if data is not None and not isinstance(data, dict):
         raise ValueError(f"{config} 顶层应为配置字段映射")
     return config, data or {}

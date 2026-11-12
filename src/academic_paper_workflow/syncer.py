@@ -54,8 +54,8 @@ def _read(path: Path) -> bytes | None:
         return None
 
 
-def _manifest(root: Path) -> dict:
-    raw = _read(_path(root, _MANIFEST))
+def _manifest(root: Path, manifest_name: str = _MANIFEST, managed=None) -> dict:
+    raw = _read(_path(root, manifest_name))
     if raw is None:
         return {"schema_version": 1, "files": {}}
     try:
@@ -63,7 +63,7 @@ def _manifest(root: Path) -> dict:
         if not isinstance(manifest, dict) or manifest.get("schema_version") != 1 or not isinstance(manifest.get("files"), dict):
             raise ValueError("unsupported manifest schema")
         for name, record in manifest["files"].items():
-            if name not in _MANAGED or not isinstance(record, dict):
+            if name not in (_MANAGED if managed is None else managed) or not isinstance(record, dict):
                 raise ValueError("unknown managed file or invalid record")
             _path(root, name)
             for field in ("sha256", "pending_sha256"):
@@ -74,7 +74,7 @@ def _manifest(root: Path) -> dict:
                 raise ValueError("record has no ownership hash")
         return manifest
     except (ValueError, UnicodeError) as exc:
-        raise SyncError(f"Invalid {_MANIFEST}: {exc}") from exc
+        raise SyncError(f"Invalid {manifest_name}: {exc}") from exc
 
 
 def _json_bytes(value: dict) -> bytes:
@@ -104,11 +104,11 @@ def _replace(root: Path, relative: str, content: bytes, expected: bytes | None) 
 
 
 @contextmanager
-def _lock(root: Path):
+def _lock(root: Path, lock_name: str = ".paper-flow/sync.lock"):
     """OS locks release after a crash; a persistent lock file needs no stale cleanup."""
-    path = _path(root, ".paper-flow/sync.lock")
+    path = _path(root, lock_name)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path = _path(root, ".paper-flow/sync.lock")
+    path = _path(root, lock_name)
     with path.open("a+b") as stream:
         acquired = False
         try:
@@ -151,10 +151,10 @@ def _desired(target: str) -> dict[str, bytes]:
     return files
 
 
-def _run(root: Path, desired: dict[str, bytes], check: bool) -> int:
-    manifest_path = _path(root, _MANIFEST)
+def _run(root: Path, desired: dict[str, bytes], check: bool, *, manifest_name: str = _MANIFEST, managed=None) -> int:
+    manifest_path = _path(root, manifest_name)
     original_manifest = _read(manifest_path)
-    manifest = _manifest(root)
+    manifest = _manifest(root, manifest_name, managed)
     records = manifest["files"]
     actions = []
     conflicts = False
@@ -207,13 +207,13 @@ def _run(root: Path, desired: dict[str, bytes], check: bool) -> int:
                 previous["sha256"] = _digest(current)
             records[relative] = {**previous, "pending_sha256": new_record["sha256"], "pending_version": str(VERSION)}
             pending = _json_bytes(manifest)
-            _replace(root, _MANIFEST, pending, manifest_bytes)
+            _replace(root, manifest_name, pending, manifest_bytes)
             manifest_bytes = pending
             _replace(root, relative, content, current)
             writes += 1
         records[relative] = new_record
         committed = _json_bytes(manifest)
-        _replace(root, _MANIFEST, committed, manifest_bytes)
+        _replace(root, manifest_name, committed, manifest_bytes)
         manifest_bytes = committed
     print(f"Sync complete: wrote {writes} content file(s); updated managed hashes.")
     return 0

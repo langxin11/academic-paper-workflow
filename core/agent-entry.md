@@ -50,4 +50,4 @@ paper-flow show one-pager-template
 
 按 note-prompt 完成实际材料核对、证据清单、十段笔记、原文复核和人工索引；图片存笔记同级相对 `assets/<paper-slug>/`。旧笔记保留组织。关键证据未闭环保留 `in-progress`，限定范围核实后才能 `done`；AI分析标 **【笔记推断】**。交付分别报告正文与索引结果。
 
-写完笔记后用 `paper-flow --vault "<Vault>" index --note "<笔记的 Vault 相对路径>" --guide "<可检索的一句话导读>"` 登记人工入口并重建台账。需要写回 PDF 时先读色表及 `paper-flow annotate --help`，准备完整引文和稳定 ID，在目标 PDF 上运行 `annotate --pdf "<PDF>" --json "<计划>" --check`，核对定位后以相同参数去掉 `--check` 提交。按实际结果报告备份、跳过或失败项。详见 `paper-flow show note-prompt`。本地材料优先；MinerU 自动云解析属后续阶段。
+写完笔记后用 `paper-flow --vault "<Vault>" index --note "<笔记的 Vault 相对路径>" --guide "<可检索的一句话导读>"` 登记人工入口并重建台账。需要写回 PDF 时先读色表及 `paper-flow annotate --help`，准备完整引文和稳定 ID，在目标 PDF 上运行 `annotate --pdf "<PDF>" --json "<计划>" --check`，核对定位后以相同参数去掉 `--check` 提交。按实际结果报告备份、跳过或失败项。详见 `paper-flow show note-prompt`。用 `paper-flow parse --attachment-key <附件key> --json` 或 `parse --pdf <PDF> --json` 准备材料。默认优先使用本地全文或原 PDF；需要云解析时按本机策略使用 `--cloud`。

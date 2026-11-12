@@ -1,6 +1,7 @@
 # RFC 0001 · academic-paper-workflow 独立化与跨 Agent 适配
 
-**状态**　设计定稿，待实现  
+**状态**　第一至第三阶段已通过实施验收。第三阶段已用 Yan 2024 实测 MinerU 官方精准解析、全文与配图校验和离线缓存复用。
+
 **日期**　2026-11-11  
 **目标客户端**　Antigravity、Claude Code、Codex  
 **核心组件**　Python、uv、PyMuPDF、MinerU 精准解析 API
@@ -9,7 +10,7 @@
 
 让三个客户端在不同设备上使用同版文献精读方法，并能从笔记里的关键结论追溯到原文图表、公式与实验条件。工作流覆盖材料定位、按需解析、精读笔记、PDF 批注、索引登记和按需生成的一图流。
 
-引擎 Git 仓库与个人 Obsidian Vault 使用独立物理目录。引擎维护通用规约、模板、代码和锁文件；Vault 维护私人笔记、正式图片、人工索引与分发到本库的轻量入口。两库采用外部 CLI 和普通文件交互，避免 submodule 和符号链接。Python 环境、解析缓存、ZIP、凭据与机器配置留在 Vault 之外，个人论文和笔记也不进入引擎 Git 历史。
+引擎 Git 仓库与个人 Obsidian Vault 使用独立物理目录。引擎维护通用规约、模板、代码和锁文件；Vault 维护私人笔记、正式图片与人工索引。个人部署使用三个客户端的用户级入口；共享项目可按需采用第 7 节的项目级同步。两库采用外部 CLI 和普通文件交互，避免 submodule 和符号链接。Python 环境、解析缓存、ZIP、凭据与机器配置留在 Vault 之外，个人论文和笔记也不进入引擎 Git 历史。
 
 ## 2. 规约归属和仓库结构
 
@@ -28,12 +29,12 @@
 
 ## 3. uv 运行方式与寻址
 
-在引擎仓库内使用 `uv run --locked paper-flow …`。从 Vault 或其他目录启动 Agent 时，以 `--project` 指定引擎。以下为计划提供的接口；尖括号表示由本机配置或调用者提供的值。
+在引擎仓库内使用 `uv run --locked paper-flow …`。从 Vault 或其他目录启动 Agent 时，以 `--project` 指定引擎。以下为已实现的接口；尖括号表示由本机配置或调用者提供的值。
 
 ```text
 uv run --project "<引擎目录>" --locked paper-flow --vault "<Vault目录>" sync --target all --check
 uv run --project "<引擎目录>" --locked paper-flow --vault "<Vault目录>" sync --target all
-uv run --project "<引擎目录>" --locked paper-flow parse --pdf "<PDF路径>"
+uv run --project "<引擎目录>" --locked paper-flow parse --pdf "<PDF路径>" --cloud --json
 uv run --project "<引擎目录>" --locked paper-flow parse --attachment-key "<附件key>"
 uv run --project "<引擎目录>" --locked paper-flow annotate --pdf "<PDF路径>" --json "<批注JSON>"
 uv run --project "<引擎目录>" --locked paper-flow --vault "<Vault目录>" index
@@ -51,7 +52,7 @@ uv run --project "<引擎目录>" --locked paper-flow --vault "<Vault目录>" in
 
 ## 5. MinerU 自动解析与断点续查
 
-本机可配置“仅使用本地材料”或“缺失时自动云解析”。启用云解析后从环境获取 `MINERU_API_KEY`，优先复用已有材料。凭据和临时签名 URL 均不写入仓库、笔记或普通日志。
+本机可配置“仅使用本地材料”或“缺失时自动云解析”。优先复用已有材料。确需上传时，从非空的 `MINERU_API_KEY` 或本机 `config.local.yaml` 的 `parse.api_key` 读取 Token，环境变量优先。本机配置属于 Git 忽略项。任务状态、分发包、笔记及普通日志均不包含 Token 或临时签名 URL。
 
 | 阶段 | 协议和恢复约定 |
 | --- | --- |
@@ -81,18 +82,21 @@ uv run --project "<引擎目录>" --locked paper-flow --vault "<Vault目录>" in
 
 ## 7. 跨 Agent 分发与多设备同步
 
-| 客户端 | Vault 项目级入口 |
-| --- | --- |
-| Antigravity、Codex | `.agents/skills/paper-note/SKILL.md` |
-| Claude Code | `.claude/skills/paper-note/SKILL.md` |
+个人 Vault 采用用户级入口。每台机器运行 `paper-flow sync --scope user`，引擎记录本机资源读取命令及入口文件摘要。精读规范、模板和脚本保存在 Vault 外。个人 Vault 的补充规约保存在私有目录，由三个客户端的用户规则按目标路径引用。
 
-以两个普通文件安装同一份工作流。首版用静态 Markdown 和少量字段替换，按任务加载对应的规约、色表和模板，避免把整份材料注入每次会话。入口可通过本机 CLI 获取已安装版本的资源。同步正式 Obsidian 模板时保留用户的本地编辑，项目级 `AGENTS.md`、`CLAUDE.md` 和插件设置仍由 Vault 维护。
+| 客户端 | 用户级精读入口 |
+| --- | --- |
+| Antigravity | `~/.gemini/config/skills/paper-note/SKILL.md` |
+| Claude Code | `~/.claude/skills/paper-note/SKILL.md` |
+| Codex | `~/.agents/skills/paper-note/SKILL.md` |
+
+同步清单位于 `~/.paper-flow/user-manifest.json`。默认 `sync` 使用用户级模式。共享项目仍可显式运行 `paper-flow --vault "<Vault>" sync --scope project` 生成库内入口、模板与项目清单。独立安装的一图流技能保留配套样图和模板，精读入口同步只管理自己的文件。
 
 `sync --check` 预览新增、更新及本地冲突。以已安装版本和受管文件清单为准，用上次分发的内容摘要识别本地修改；首次接入若已存在不同内容，展示差异供合并。文本统一 UTF-8 和 LF。内容相同跳过写入，升级采用临时文件替换。换行一致性和多设备编辑冲突分别处理。
 
 ## 8. 首版实施与验收
 
-先建立 uv 包、可分发的规范与模板，以及两个客户端入口。在测试 Vault 打通本地精读、索引和 PDF 写回，再接入云解析的上传、续查与缓存发布。一图流按需触发，MCP 和其他客户端留待出现具体需求时评估。
+已建立 uv 包、可分发的规范与模板，以及三个用户级客户端入口。第一、第二阶段已在测试 Vault 验证同篇精读、索引和 PDF 写回。第三阶段已接入附件 key 寻址、本地材料与指纹缓存复用、v4 批次上传、断点续查、ZIP 验证及原子发布。一图流按需触发，MCP 和其他客户端留待出现具体需求时评估。
 
 | 验收场景 | 通过条件 |
 | --- | --- |
@@ -102,6 +106,13 @@ uv run --project "<引擎目录>" --locked paper-flow --vault "<Vault目录>" in
 | 批注安全 | 手工批注保留，重复执行零叠加；歧义引文和模拟写入失败均保留原件，可恢复本轮之前的版本。 |
 | 同步升级 | 连续同步两次，第二次写入零个文件；本地修改可看到差异并得到保留。 |
 | 笔记与索引 | 新笔记符合正式模板，证据缺口可见，旧笔记仍可查找，自动重建台账保留人工阅读路线。 |
+
+### 第三阶段实施记录（2026-11-12）
+
+- Yan 2024 附件 `SJ552ALW` 在测试 Vault 中解析为一份 21 页 PDF。Zotero 插件来源记录与附件匹配，命令复用既有 MinerU 全文及引用图片；原 PDF 保持原摘要。离线缺少材料时验证返回原 PDF。
+- 在本地 HTTP 协议测试中，使用同一 PDF 字节完成一次申请和一次上传；前台中断后从原批次取得结果 ZIP，重复命中缓存时没有新增请求。另验证了损坏 ZIP、越界条目和无效图片均不发布为有效缓存。中断恢复和错误注入使用本地测试服务验证。
+- 官方云端验收使用同一附件 `SJ552ALW`，在测试 Vault 跳过插件结果，向 MinerU v4 精准解析服务提交新批次（pipeline）。服务返回 done，CLI 返回 mineru-cloud。全文可按 UTF-8 打开，包含论文题名、引言与参考文献。内容清单覆盖全部 21 页。Markdown 引用了 40 张不同图片，结合内容清单共 96 张，均已打开并解码。使用同一附件和参数执行离线复查，返回 cache；又校验了缓存清单的 102 个文件。原 PDF 的 SHA-256 与前两轮验收一致。
+- 已确认上传的任务继续查询原批次。服务返回 `waiting-file` 时，进程内仍持有的上传地址可重试。跨进程无法从公开 API 取回原签名上传地址；CLI 提示显式 `--replace-batch`，避免无提示重复申请。
 
 实现以这些可复现的结果决定完成度。主要通过共享规约、复用安装入口和统一解析流程控制代码规模。
 

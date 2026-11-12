@@ -70,7 +70,7 @@ class PhaseOneCLI(unittest.TestCase):
         return proc
 
     def sync(self, *args, target="all", expected=0):
-        return self.run_cli("--vault", self.vault, "sync", "--target", target,
+        return self.run_cli("--vault", self.vault, "sync", "--scope", "project", "--target", target,
                             *args, expected=expected)
 
     def test_every_packaged_resource_is_available_without_vault(self):
@@ -114,7 +114,7 @@ class PhaseOneCLI(unittest.TestCase):
         ):
             with self.subTest(target=target):
                 vault = self.make_vault(target)
-                self.run_cli("--vault", vault, "sync", "--target", target)
+                self.run_cli("--vault", vault, "sync", "--scope", "project", "--target", target)
                 self.assertTrue((vault / wanted).is_file())
                 self.assertFalse((vault / absent).exists())
                 self.assertTrue((vault / TEMPLATE).is_file())
@@ -135,10 +135,10 @@ class PhaseOneCLI(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("# Hand maintained local content\n", encoding="utf-8")
                 before = snapshot(vault)
-                self.run_cli("--vault", vault, "sync", "--target", "all",
+                self.run_cli("--vault", vault, "sync", "--scope", "project", "--target", "all",
                              "--check", expected=2)
                 self.assertEqual(snapshot(vault), before)
-                self.run_cli("--vault", vault, "sync", "--target", "all", expected=2)
+                self.run_cli("--vault", vault, "sync", "--scope", "project", "--target", "all", expected=2)
                 self.assertEqual(path.read_text(encoding="utf-8"),
                                  "# Hand maintained local content\n")
 
@@ -185,7 +185,7 @@ class PhaseOneCLI(unittest.TestCase):
         other = self.make_vault("environment-vault")
         env = dict(self.env, PAPER_FLOW_VAULT=str(other))
         before = snapshot(other)
-        self.run_cli("--vault", self.vault, "sync", "--target", "all", cwd=other, env=env)
+        self.run_cli("--vault", self.vault, "sync", "--scope", "project", "--target", "all", cwd=other, env=env)
         self.assertTrue((self.vault / AGENTS).is_file())
         self.assertEqual(snapshot(other), before)
 
@@ -193,14 +193,14 @@ class PhaseOneCLI(unittest.TestCase):
         other = self.make_vault("cwd-vault")
         before = snapshot(other)
         env = dict(self.env, PAPER_FLOW_VAULT=str(self.vault))
-        self.run_cli("sync", "--target", "all", cwd=other, env=env)
+        self.run_cli("sync", "--scope", "project", "--target", "all", cwd=other, env=env)
         self.assertTrue((self.vault / AGENTS).is_file())
         self.assertEqual(snapshot(other), before)
 
     def test_upward_scan_uses_nearest_obsidian_directory(self):
         nested = self.vault / "notes" / "deep"
         nested.mkdir(parents=True)
-        self.run_cli("sync", "--target", "all", cwd=nested)
+        self.run_cli("sync", "--scope", "project", "--target", "all", cwd=nested)
         self.assertTrue((self.vault / AGENTS).is_file())
         self.assertFalse((nested / AGENTS).exists())
 
@@ -209,7 +209,7 @@ class PhaseOneCLI(unittest.TestCase):
         for invalid in (self.root / "missing", self.outside):
             with self.subTest(path=invalid):
                 before = snapshot(self.vault)
-                self.run_cli("--vault", invalid, "sync", "--target", "all",
+                self.run_cli("--vault", invalid, "sync", "--scope", "project", "--target", "all",
                              cwd=self.vault, env=env, expected=2)
                 self.assertEqual(snapshot(self.vault), before)
                 self.assertFalse((invalid / AGENTS).exists())
@@ -217,7 +217,7 @@ class PhaseOneCLI(unittest.TestCase):
     def test_invalid_environment_vault_never_falls_back(self):
         env = dict(self.env, PAPER_FLOW_VAULT=str(self.root / "missing"))
         before = snapshot(self.vault)
-        self.run_cli("sync", "--target", "all", cwd=self.vault, env=env, expected=2)
+        self.run_cli("sync", "--scope", "project", "--target", "all", cwd=self.vault, env=env, expected=2)
         self.assertEqual(snapshot(self.vault), before)
 
     def test_config_vault_is_relative_to_engine_and_overrides_upward_scan(self):
@@ -225,15 +225,15 @@ class PhaseOneCLI(unittest.TestCase):
             'vault: "../synthetic-vault"\n', encoding="utf-8")
         other = self.make_vault("upward-vault")
         before = snapshot(other)
-        self.run_cli("sync", "--target", "all", cwd=other)
+        self.run_cli("sync", "--scope", "project", "--target", "all", cwd=other)
         self.assertTrue((self.vault / AGENTS).is_file())
         self.assertEqual(snapshot(other), before)
 
     def test_environment_and_explicit_options_override_invalid_config(self):
         (self.engine / "config.local.yaml").write_text("vault: [broken\n", encoding="utf-8")
         env = dict(self.env, PAPER_FLOW_VAULT=str(self.vault))
-        self.run_cli("sync", "--target", "all", env=env)
-        self.run_cli("--vault", self.vault, "sync", "--target", "all")
+        self.run_cli("sync", "--scope", "project", "--target", "all", env=env)
+        self.run_cli("--vault", self.vault, "sync", "--scope", "project", "--target", "all")
 
     def test_invalid_local_config_never_falls_back(self):
         for content in ('vault: "../missing"\n', "vault: [broken\n",
@@ -241,12 +241,12 @@ class PhaseOneCLI(unittest.TestCase):
             with self.subTest(config=content):
                 (self.engine / "config.local.yaml").write_text(content, encoding="utf-8")
                 before = snapshot(self.vault)
-                self.run_cli("sync", "--target", "all", cwd=self.vault, expected=2)
+                self.run_cli("sync", "--scope", "project", "--target", "all", cwd=self.vault, expected=2)
                 self.assertEqual(snapshot(self.vault), before)
 
     def test_config_without_vault_allows_upward_scan(self):
         (self.engine / "config.local.yaml").write_text("{}\n", encoding="utf-8")
-        self.run_cli("sync", "--target", "all", cwd=self.vault)
+        self.run_cli("sync", "--scope", "project", "--target", "all", cwd=self.vault)
         self.assertTrue((self.vault / AGENTS).is_file())
 
 
