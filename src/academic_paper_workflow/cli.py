@@ -26,7 +26,7 @@ def main(argv: list[str] | None = None) -> int:
     deploy.add_argument("--target", choices=["all", "antigravity", "codex", "claude"], default="all")
     deploy.add_argument("--check", action="store_true", help="只预览，待写入时退出码为 1")
     indexer.register(commands.add_parser("index", help="重建文献台账、登记精读笔记"))
-    parsing.register(commands.add_parser("parse", help="从 PDF 或 Zotero 附件 key 查找材料，按需使用 MinerU"))
+    parsing.register(commands.add_parser("parse", help="按 Zotero 标题、附件 key 或 PDF 路径取材，按需使用 MinerU"))
     annotator.register(commands.add_parser("annotate", help="预检引文并安全写入 PDF 内嵌批注"))
     args = parser.parse_args(argv)
     try:

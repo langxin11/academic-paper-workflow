@@ -13,6 +13,7 @@ import zipfile
 import pymupdf
 
 from academic_paper_workflow.cli import main
+from academic_paper_workflow.zotero_titles import TitleMatch, TitleResolutionError
 
 
 class AttachmentParseTests(unittest.TestCase):
@@ -57,6 +58,55 @@ class AttachmentParseTests(unittest.TestCase):
         self.assertEqual(record["sha256"], hashlib.sha256(self.pdf.read_bytes()).hexdigest())
         self.assertEqual(self.call("--pdf", self.pdf)[1], record)
         self.assertFalse(self.cache.exists())
+
+    def test_title_cli_returns_selected_vault_and_configured_notes_dir(self):
+        vault = self.root / "目标 Vault"
+        (vault / ".obsidian").mkdir(parents=True)
+        self.config.write_text(self.config.read_text("utf8") +
+                               "index:\n  notes_dir: Papers/精读笔记\n", "utf8")
+        match = TitleMatch(self.pdf, "SJ552ALW", "Impact-aware bimanual catching",
+                           "PARENT01", "10.1234/example", "2024", 1)
+        with patch.dict(os.environ, {"PAPER_FLOW_VAULT": str(vault)}), patch(
+            "academic_paper_workflow.parsing.resolve_title", return_value=match
+        ) as resolve, patch("academic_paper_workflow.parsing.fetch_archive") as upload:
+            code, record, error = self.call("--title", match.title)
+        self.assertEqual((code, error), (0, ""))
+        resolve.assert_called_once_with(match.title, self.zotero)
+        self.assertEqual(record["vault"], str(vault))
+        self.assertEqual(record["notes_dir"], str(vault / "Papers" / "精读笔记"))
+        self.assertEqual(record["title"], match.title)
+        self.assertEqual(record["item_key"], "PARENT01")
+        self.assertEqual(record["doi"], "10.1234/example")
+        self.assertEqual(record["attachment_key"], "SJ552ALW")
+        self.assertEqual(record["pdf"], str(self.pdf))
+        self.assertEqual(record["source"], "original-pdf")
+        upload.assert_not_called()
+        self.assertFalse(self.cache.exists())
+        self.assertFalse((vault / "Papers").exists())
+
+    def test_title_ambiguity_stops_cloud_upload_and_all_file_writes(self):
+        candidate = {"title": "Catching", "year": "2024", "doi": "10.1234/example",
+                     "key": "PARENT01", "attachments": [
+                         {"key": "SJ552ALW", "filename": self.pdf.name, "status": "available"}]}
+        ambiguous = TitleResolutionError("请选择候选文献", [candidate])
+        before = {p.relative_to(self.root): p.read_bytes()
+                  for p in self.root.rglob("*") if p.is_file()}
+        with patch.dict(os.environ, {"MINERU_API_KEY": "local-dummy"}), patch(
+            "academic_paper_workflow.parsing.resolve_title", side_effect=ambiguous
+        ), patch("academic_paper_workflow.parsing.fetch_archive") as upload, patch(
+            "academic_paper_workflow.parsing.publish_archive"
+        ) as publish:
+            code, record, error = self.call("--title", "Catching", "--cloud")
+        self.assertEqual((code, record), (2, {}))
+        self.assertIn("PARENT01", error)
+        self.assertIn("SJ552ALW", error)
+        self.assertIn(self.pdf.name, error)
+        upload.assert_not_called()
+        publish.assert_not_called()
+        self.assertFalse(self.cache.exists())
+        after = {p.relative_to(self.root): p.read_bytes()
+                 for p in self.root.rglob("*") if p.is_file()}
+        self.assertEqual(after, before)
 
     def test_invalid_parent_missing_or_ambiguous_attachment(self):
         for key in ("bad/../../", "VUYKP4P2"):

@@ -35,7 +35,7 @@ def load_local_config() -> tuple[Path | None, dict]:
     return config, data or {}
 
 
-def resolve_vault(explicit: str | None) -> Path:
+def find_vault(explicit: str | None) -> Path | None:
     cwd = Path.cwd()
     if explicit is not None:
         return selected_vault(explicit, "--vault", cwd)
@@ -51,4 +51,11 @@ def resolve_vault(explicit: str | None) -> Path:
     for path in (cwd, *cwd.parents):
         if (path / ".obsidian").is_dir():
             return path
+    return None
+
+
+def resolve_vault(explicit: str | None) -> Path:
+    path = find_vault(explicit)
+    if path is not None:
+        return path
     raise ValueError("未找到 Obsidian Vault，请使用 --vault 或 PAPER_FLOW_VAULT。")

@@ -13,7 +13,9 @@ import tempfile
 import pymupdf
 
 from ._locking import local_lock
-from .config import load_local_config
+from .config import find_vault, load_local_config
+from .indexer import settings as index_settings
+from .zotero_titles import resolve_title
 from .mineru_client import ParsePending, fetch_archive
 from .parse_cache import MaterialValidationError, cached_result, publish_archive, validate_materials
 
@@ -25,6 +27,7 @@ KEY = re.compile(r"[A-Z0-9]{8}")
 
 def register(parser):
     source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--title", help="Zotero 文献完整标题；多个条目或 PDF 时返回候选")
     source.add_argument("--attachment-key", help="Zotero 附件的 8 位 key")
     source.add_argument("--pdf", type=Path, help="明确的 PDF 文件")
     parser.add_argument("--zotero-data-dir", help="含 storage/ 的 Zotero 数据目录")
@@ -123,9 +126,8 @@ def _local_materials(pdf, key, fingerprint, library, plugin, options):
         if key:
             roots.append(library / key)
     if key:
-        roots.append(pdf.parent / "mineru")
         roots.extend(_plugin_results(plugin, pdf, key, fingerprint))
-    if not key and (pdf.parent / "mineru").is_dir() and len(_pdfs(pdf.parent)) == 1:
+    if (pdf.parent / "mineru").is_dir() and len(_pdfs(pdf.parent)) == 1:
         roots.append(pdf.parent / "mineru")
     candidates = {}
     for root in roots:
@@ -189,7 +191,8 @@ def run(args):
         raise ValueError("parse 配置应为字段映射")
     config_base = config.parent if config else Path.cwd()
     storage = (_path(args.zotero_data_dir, cfg, "zotero_data_dir", config_base, Path.home() / "Zotero") / "storage").resolve()
-    pdf, key = _source(args, storage)
+    match = resolve_title(args.title, storage.parent) if args.title is not None else None
+    pdf, key = (match.pdf, match.attachment_key) if match is not None else _source(args, storage)
     with pymupdf.open(pdf) as opened:
         if not opened.is_pdf or opened.needs_pass or not opened.page_count:
             raise ValueError("需要可读取且已解锁的有效 PDF")
@@ -211,6 +214,11 @@ def run(args):
     if job.resolve() != job:
         raise ValueError("缓存任务目录经过了重定向")
     info = {"attachment_key": key, "pdf": str(pdf), "sha256": sha, "pages": pages}
+    if match is not None:
+        vault = find_vault(args.vault)
+        info.update(title=match.title, item_key=match.item_key, doi=match.doi, year=match.year,
+                    vault=str(vault) if vault is not None else None,
+                    notes_dir=str(index_settings(vault).notes) if vault is not None else None)
 
     def valid_cache():
         identity = job / "input.json"
