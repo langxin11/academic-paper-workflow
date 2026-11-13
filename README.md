@@ -2,6 +2,8 @@
 
 为 Antigravity、Claude Code 和 Codex 分发同一版中文文献精读工作流。当前提供 `show`、`sync`、`parse`、`index`、`annotate`。可从 Zotero 附件或本地 PDF 准备材料，按需解析、编写精读笔记、更新索引和写回批注。[定稿 RFC](docs/rfc/0001-academic-paper-workflow.md)
 
+日常在 Codex、Claude Code 或 Antigravity 中说 **“精读《论文完整标题》”**。Agent 会从 Zotero 选定唯一匹配的 PDF，按需解析，保存中文精读与配图，登记索引并返回 Obsidian 链接。多个论文或 PDF 版本会让你选择。需要给原文划线时说 **“精读《论文完整标题》，并给 PDF 加批注”**。
+
 ## 从工程目录运行
 
 安装 uv 后，在引擎仓库根目录执行：
@@ -48,7 +50,7 @@ uv run --project "$PAPER_FLOW_ENGINE" --locked paper-flow show note-prompt
 
 ## 准备 PDF 与 MinerU 全文
 
-从引擎目录运行以下命令。第一条只读本地，第二条在没有可用解析时调用 MinerU 精准 API。要使用云服务，在引擎根目录的 `config.local.yaml` 中填写下列字段。已存在 `parse:` 时只添加其下的 `api_key`。这个本机文件以明文保存 Token，Git 会忽略它。每次调用都会重新读取；如果同时设置了非空的 `MINERU_API_KEY`，优先使用环境变量。
+从引擎目录运行以下命令。带 `--cloud` 的命令会在没有可用解析时调用 MinerU 精准 API；仅用本地材料时可传 `--local-only`。要使用云服务，在引擎根目录的 `config.local.yaml` 中填写下列字段。已存在 `parse:` 时只添加其下的 `api_key`。这个本机文件以明文保存 Token，Git 会忽略它。每次调用都会重新读取；如果同时设置了非空的 `MINERU_API_KEY`，优先使用环境变量。
 
 ```yaml
 parse:
@@ -56,10 +58,12 @@ parse:
 ```
 
 ```text
+uv run --locked paper-flow parse --title "<论文完整标题>" --cloud --json
 uv run --locked paper-flow parse --attachment-key <附件key> --json
 uv run --locked paper-flow parse --pdf "<PDF路径>" --cloud --json
 ```
 
+- `--title` 匹配 Zotero 书目条目的完整题名及其 PDF。数据库由运行中的 Zotero 锁定时使用本机只读 API。近似题名仅用于列候选；同名条目、多个 PDF 或缺失文件时需明确版本。题名命中的 JSON 还提供条目 key、年份、DOI 及已配置的 Vault 和笔记目录。
 - 默认在 `~/Zotero/storage/<附件key>/` 定位唯一 PDF，可用 `--zotero-data-dir` 指定含 `storage/` 的目录。多个 PDF、父条目或链接附件请用明确的 `--pdf`。
 - 先查引擎缓存，再查附件附近的 `mineru/`、`--results-dir` 下按 PDF SHA-256 或附件 key 命名的目录，以及 llm-for-zotero 插件的来源记录。插件复用会比对附件 key、文件名及源摘要或解析时间。多份结果用 `--materials <该论文的结果目录>` 明确选择。外部旧结果通常缺少参数记录，非默认解析参数只自动匹配引擎自己的缓存。
 - 本地没有全文时返回 `original-pdf`。成功复用外部全文、命中引擎缓存、完成云端下载时分别返回 `existing`、`cache`、`mineru-cloud`。JSON 包含 PDF 路径、指纹、页数、`full_md` 和可用的 `images_dir`。图像路径同时从 Markdown 和 MinerU 的 content_list.json 中核验。默认缓存位于 `~/.cache/paper-flow/mineru/`，可用 `--cache-dir` 覆盖。
