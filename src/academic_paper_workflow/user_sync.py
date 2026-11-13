@@ -15,7 +15,11 @@ ROOTS = {
     "antigravity": ".gemini/config/skills",
     "claude": ".claude/skills",
 }
-MANAGED = {f"{root}/paper-note/SKILL.md" for root in ROOTS.values()}
+ENTRIES = {
+    "paper-note": "agent-entry",
+    "paper-one-pager": "one-pager-entry",
+}
+MANAGED = {f"{root}/{skill}/SKILL.md" for root in ROOTS.values() for skill in ENTRIES}
 
 
 def _command() -> str:
@@ -26,15 +30,15 @@ def _command() -> str:
     return shlex.quote(executable) + " -m academic_paper_workflow"
 
 
-def _entry() -> bytes:
-    text = resource_text("agent-entry").replace("{{VERSION}}", str(VERSION))
+def _entry(resource_name: str = "agent-entry") -> bytes:
+    text = resource_text(resource_name).replace("{{VERSION}}", str(VERSION))
     # Keep the shared entry unchanged; per-machine launch instructions belong here.
     text += "\n## 本机已安装引擎\n\n本入口由 `paper-flow sync --scope user` 生成。所有 `paper-flow` 命令均可用以下本机启动前缀替换，在任意目录读取已安装包的资源，无需进入 Vault 或引擎源码目录：\n\n```" + ("powershell" if os.name == "nt" else "sh") + "\n" + _command() + " show spec\n```\n\n将 `show spec` 替换为所需子命令；涉及写入 Vault 时显式传入 `--vault` 或使用本机配置。更换机器或 Python 安装后重新同步此用户入口。\n"
     return _canonical(text.encode("utf-8"))
 
 
 def sync_user(target: str = "all", check: bool = False, *, home: Path | None = None) -> int:
-    """Install paper-note independently of separately installed skills."""
+    """Install managed paper workflow skill entries for each selected client."""
     try:
         root = (Path.home() if home is None else Path(home)).expanduser().resolve(strict=True)
         if not root.is_dir():
@@ -45,7 +49,8 @@ def sync_user(target: str = "all", check: bool = False, *, home: Path | None = N
         for name, skills_root in ROOTS.items():
             if target not in {"all", name}:
                 continue
-            desired[f"{skills_root}/paper-note/SKILL.md"] = _entry()
+            for skill, resource_name in ENTRIES.items():
+                desired[f"{skills_root}/{skill}/SKILL.md"] = _entry(resource_name)
         options = dict(manifest_name=MANIFEST, managed=MANAGED)
         if check:
             return _run(root, desired, True, **options)

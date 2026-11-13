@@ -4,7 +4,7 @@ description: >-
   精读论文并制作中文 Obsidian 文献笔记；触发于“精读《论文标题》”“精读X”“对X形成笔记”
   “给X做笔记”“处理这篇文献”“close reading”“read and take notes”；
   也适用于“给PDF加批注”“划线”“标注原文”的证据与语义规划，
-  以及按需“文献一图流”“论文单页速览”。使用本地 PDF 或 Zotero/MinerU 材料，
+  以及有条件自动或按需生成“文献一图流”“论文单页速览”。使用本地 PDF 或 Zotero/MinerU 材料，
   逐项核查证据、区分【笔记推断】并维护人工索引。支持可预检的六色 PDF 内嵌批注。
 ---
 
@@ -49,7 +49,7 @@ paper-flow show note-template
 paper-flow show colors
 ```
 
-仅在用户请求一图流时读取：
+用户请求一图流，或精读完成复核且同时满足 `usefulness: 高`、`status: done` 与清晰方法/系统因果链时读取：
 
 ```text
 paper-flow show one-pager-prompt

@@ -16,8 +16,10 @@ from .resources import VERSION, resource_text
 _MANIFEST = ".paper-flow/manifest.json"
 _ENTRY = ".agents/skills/paper-note/SKILL.md"
 _CLAUDE = ".claude/skills/paper-note/SKILL.md"
+_ONE_PAGER_ENTRY = ".agents/skills/paper-one-pager/SKILL.md"
+_ONE_PAGER_CLAUDE = ".claude/skills/paper-one-pager/SKILL.md"
 _TEMPLATE = "Templates/文献精读模板.md"
-_MANAGED = {_ENTRY, _CLAUDE, _TEMPLATE}
+_MANAGED = {_ENTRY, _CLAUDE, _ONE_PAGER_ENTRY, _ONE_PAGER_CLAUDE, _TEMPLATE}
 
 
 class SyncError(Exception):
@@ -143,11 +145,14 @@ def _desired(target: str) -> dict[str, bytes]:
     if target not in {"all", "codex", "claude", "antigravity"}:
         raise SyncError(f"Unknown sync target: {target}")
     entry = _canonical(resource_text("agent-entry").replace("{{VERSION}}", str(VERSION)).encode("utf-8"))
+    one_pager = _canonical(resource_text("one-pager-entry").replace("{{VERSION}}", str(VERSION)).encode("utf-8"))
     files = {_TEMPLATE: _canonical(resource_text("note-template").encode("utf-8"))}
     if target in {"all", "codex", "antigravity"}:
         files[_ENTRY] = entry
+        files[_ONE_PAGER_ENTRY] = one_pager
     if target in {"all", "claude"}:
         files[_CLAUDE] = entry
+        files[_ONE_PAGER_CLAUDE] = one_pager
     return files
 
 

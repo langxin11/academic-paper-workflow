@@ -48,7 +48,7 @@ uv run --project "<引擎目录>" --locked paper-flow --vault "<Vault目录>" in
 2. 从已配置的 MinerU 结果目录和引擎缓存复用相应论文的 `full.md` 与图像。来源有歧义时返回候选。缺少解析结果时按第 5 节策略处理，离线阅读仍可使用原 PDF。
 3. Agent 读取对应版本的规约与正式模板。Citation 后给出核心启发、复用价值和阅读范围，正文依次说明问题、背景、核心方法、关键实验、Claim ↔ Evidence、图像速查、公式速查、局限与创新切入点、研究用途及最终评价。重要数据与公式回查原 PDF，标出图表号、公式号或页码。§4 记录实测数据，§5 检视论证。阅读者的延伸判断标注【笔记推断】。
 4. 关键图片复制到笔记同级 `assets/<paper-slug>/`，使用相对链接。核心证据有缺口时保留 `in-progress`；限定阅读范围内核实闭环后才标记 `done`。导入草稿、空白模板和解析成功均不触发精读完成状态。
-5. 自动索引从 frontmatter 重建专用总台账，兼容正式和历史笔记。人工专题索引及检索入口按条目登记双链与导读，待确认项进入“待补收录”。正文写入与索引登记分别报告。需要一图流时，复用已核查的证据、图像和 Typst 模板。
+5. 自动索引从 frontmatter 重建专用总台账，兼容正式和历史笔记。人工专题索引及检索入口按条目登记双链与导读，待确认项进入“待补收录”。正文写入与索引登记分别报告。用户显式请求一图流，或精读满足 `usefulness: 高`、`status: done` 且具备清晰方法/系统因果链时，复用已核查的证据、图像和 Typst 模板生成一图流并自动嵌入首屏。
 
 ## 5. MinerU 自动解析与断点续查
 
@@ -84,13 +84,13 @@ uv run --project "<引擎目录>" --locked paper-flow --vault "<Vault目录>" in
 
 个人 Vault 采用用户级入口。每台机器运行 `paper-flow sync --scope user`，引擎记录本机资源读取命令及入口文件摘要。精读规范、模板和脚本保存在 Vault 外。个人 Vault 的补充规约保存在私有目录，由三个客户端的用户规则按目标路径引用。
 
-| 客户端 | 用户级精读入口 |
+| 客户端 | 用户级托管入口 |
 | --- | --- |
-| Antigravity | `~/.gemini/config/skills/paper-note/SKILL.md` |
-| Claude Code | `~/.claude/skills/paper-note/SKILL.md` |
-| Codex | `~/.agents/skills/paper-note/SKILL.md` |
+| Antigravity | `~/.gemini/config/skills/paper-note/SKILL.md` · `paper-one-pager/SKILL.md` |
+| Claude Code | `~/.claude/skills/paper-note/SKILL.md` · `paper-one-pager/SKILL.md` |
+| Codex | `~/.agents/skills/paper-note/SKILL.md` · `paper-one-pager/SKILL.md` |
 
-同步清单位于 `~/.paper-flow/user-manifest.json`。默认 `sync` 使用用户级模式。共享项目仍可显式运行 `paper-flow --vault "<Vault>" sync --scope project` 生成库内入口、模板与项目清单。独立安装的一图流技能保留配套样图和模板，精读入口同步只管理自己的文件。
+同步清单位于 `~/.paper-flow/user-manifest.json`。默认 `sync` 使用用户级模式，统一分发 `paper-note` 与 `paper-one-pager` 两个薄入口，从引擎读取同版规范和 Typst 模板；私有视觉参考样图与飞书说明留在本机 `local/` 目录按需引用，不随 Git 仓库分发。共享项目仍可显式运行 `paper-flow --vault "<Vault>" sync --scope project` 生成库内入口、模板与项目清单。
 
 `sync --check` 预览新增、更新及本地冲突。以已安装版本和受管文件清单为准，用上次分发的内容摘要识别本地修改；首次接入若已存在不同内容，展示差异供合并。文本统一 UTF-8 和 LF。内容相同跳过写入，升级采用临时文件替换。换行一致性和多设备编辑冲突分别处理。
 

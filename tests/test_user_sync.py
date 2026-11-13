@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch
 
 from academic_paper_workflow import cli
-from academic_paper_workflow.user_sync import MANIFEST, ROOTS, sync_user
+from academic_paper_workflow.user_sync import ENTRIES, MANIFEST, ROOTS, sync_user
 
 
 class UserSyncTests(unittest.TestCase):
@@ -26,31 +26,42 @@ class UserSyncTests(unittest.TestCase):
         self.assertEqual(list(self.home.iterdir()), [])
         self.assertEqual(self.sync(), 0)
         for root in ROOTS.values():
-            entry = self.home / root / "paper-note/SKILL.md"
-            self.assertTrue(entry.is_file())
-            self.assertIn("-m academic_paper_workflow", entry.read_text(encoding="utf-8"))
+            for skill in ENTRIES:
+                entry = self.home / root / f"{skill}/SKILL.md"
+                self.assertTrue(entry.is_file())
+                self.assertIn("-m academic_paper_workflow", entry.read_text(encoding="utf-8"))
         self.assertFalse((self.home / "Templates").exists())
         self.assertFalse((self.home / ".paper-flow/manifest.json").exists())
         before = {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in self.home.rglob("*") if p.is_file()}
         self.assertEqual(self.sync(), 0)
         self.assertEqual(self.sync(check=True), 0)
         self.assertEqual(before, {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in self.home.rglob("*") if p.is_file()})
-        self.assertEqual(len(json.loads((self.home / MANIFEST).read_text())["files"]), 3)
+        self.assertEqual(len(json.loads((self.home / MANIFEST).read_text())["files"]), 6)
 
-    def test_existing_one_pager_is_independent(self):
+    def test_existing_one_pager_collision_is_preserved(self):
         entry = self.home / ROOTS["codex"] / "paper-one-pager/SKILL.md"
         entry.parent.mkdir(parents=True)
         entry.write_text("my custom entry", encoding="utf-8")
+        self.assertEqual(self.sync(), 2)
+        self.assertEqual(entry.read_text(encoding="utf-8"), "my custom entry")
+        self.assertFalse((entry.parent.parent / "paper-note/SKILL.md").exists())
+
+    def test_unrelated_custom_skills_are_untouched(self):
+        custom = self.home / ROOTS["codex"] / "custom-skill/SKILL.md"
+        custom.parent.mkdir(parents=True)
+        custom.write_text("third-party skill", encoding="utf-8")
         self.assertEqual(self.sync(), 0)
-        self.assertEqual(entry.read_text(), "my custom entry")
-        self.assertTrue((entry.parent.parent / "paper-note/SKILL.md").is_file())
+        self.assertEqual(custom.read_text(encoding="utf-8"), "third-party skill")
 
     def test_owned_entry_local_edits_are_preserved(self):
         self.assertEqual(self.sync("antigravity"), 0)
-        entry = self.home / ROOTS["antigravity"] / "paper-note/SKILL.md"
-        entry.write_text("local changes", encoding="utf-8")
+        for skill in ENTRIES:
+            entry = self.home / ROOTS["antigravity"] / f"{skill}/SKILL.md"
+            entry.write_text("local changes", encoding="utf-8")
         self.assertEqual(self.sync("antigravity"), 2)
-        self.assertEqual(entry.read_text(), "local changes")
+        for skill in ENTRIES:
+            entry = self.home / ROOTS["antigravity"] / f"{skill}/SKILL.md"
+            self.assertEqual(entry.read_text(encoding="utf-8"), "local changes")
         self.assertFalse((self.home / ROOTS["codex"]).exists())
 
     def test_cli_defaults_and_explicit_project_compatibility(self):

@@ -16,10 +16,12 @@ import unittest
 
 AGENTS = Path(".agents/skills/paper-note/SKILL.md")
 CLAUDE = Path(".claude/skills/paper-note/SKILL.md")
+ONE_PAGER_AGENTS = Path(".agents/skills/paper-one-pager/SKILL.md")
+ONE_PAGER_CLAUDE = Path(".claude/skills/paper-one-pager/SKILL.md")
 TEMPLATE = Path("Templates/文献精读模板.md")
 RESOURCES = (
-    "spec", "note-template", "checklist", "agent-entry", "note-prompt",
-    "colors", "one-pager-prompt", "one-pager-template", "import-template",
+    "spec", "note-template", "checklist", "agent-entry", "one-pager-entry",
+    "note-prompt", "colors", "one-pager-prompt", "one-pager-template", "import-template",
 )
 
 
@@ -93,7 +95,7 @@ class PhaseOneCLI(unittest.TestCase):
 
     def test_all_installs_both_normal_skill_paths_and_formal_template(self):
         self.sync()
-        for relative in (AGENTS, CLAUDE, TEMPLATE):
+        for relative in (AGENTS, CLAUDE, ONE_PAGER_AGENTS, ONE_PAGER_CLAUDE, TEMPLATE):
             with self.subTest(path=relative):
                 data = (self.vault / relative).read_bytes()
                 self.assertTrue(data)
@@ -102,21 +104,25 @@ class PhaseOneCLI(unittest.TestCase):
                 data.decode("utf-8")
         self.assertEqual((self.vault / AGENTS).read_bytes(),
                          (self.vault / CLAUDE).read_bytes())
+        self.assertEqual((self.vault / ONE_PAGER_AGENTS).read_bytes(),
+                         (self.vault / ONE_PAGER_CLAUDE).read_bytes())
         template = self.run_cli("show", "note-template").stdout
         self.assertEqual((self.vault / TEMPLATE).read_text(encoding="utf-8").strip(),
                          template.strip())
 
     def test_individual_target_paths(self):
         for target, wanted, absent in (
-            ("codex", AGENTS, CLAUDE),
-            ("antigravity", AGENTS, CLAUDE),
-            ("claude", CLAUDE, AGENTS),
+            ("codex", (AGENTS, ONE_PAGER_AGENTS), (CLAUDE, ONE_PAGER_CLAUDE)),
+            ("antigravity", (AGENTS, ONE_PAGER_AGENTS), (CLAUDE, ONE_PAGER_CLAUDE)),
+            ("claude", (CLAUDE, ONE_PAGER_CLAUDE), (AGENTS, ONE_PAGER_AGENTS)),
         ):
             with self.subTest(target=target):
                 vault = self.make_vault(target)
                 self.run_cli("--vault", vault, "sync", "--scope", "project", "--target", target)
-                self.assertTrue((vault / wanted).is_file())
-                self.assertFalse((vault / absent).exists())
+                for path in wanted:
+                    self.assertTrue((vault / path).is_file())
+                for path in absent:
+                    self.assertFalse((vault / path).exists())
                 self.assertTrue((vault / TEMPLATE).is_file())
 
     def test_client_target_change_does_not_report_shared_entry_as_conflict(self):
@@ -128,7 +134,7 @@ class PhaseOneCLI(unittest.TestCase):
         self.sync("--check")
 
     def test_first_install_collision_is_preserved_and_check_is_read_only(self):
-        for index, relative in enumerate((AGENTS, CLAUDE, TEMPLATE)):
+        for index, relative in enumerate((AGENTS, CLAUDE, ONE_PAGER_AGENTS, ONE_PAGER_CLAUDE, TEMPLATE)):
             with self.subTest(path=relative):
                 vault = self.make_vault("collision-" + str(index))
                 path = vault / relative
@@ -144,14 +150,14 @@ class PhaseOneCLI(unittest.TestCase):
 
     def test_managed_local_edits_are_preserved(self):
         self.sync()
-        for relative in (AGENTS, CLAUDE, TEMPLATE):
+        for relative in (AGENTS, CLAUDE, ONE_PAGER_AGENTS, ONE_PAGER_CLAUDE, TEMPLATE):
             path = self.vault / relative
             path.write_bytes(path.read_bytes() + b"\nLOCAL USER EDIT\n")
         before = snapshot(self.vault)
         self.sync("--check", expected=2)
         self.assertEqual(snapshot(self.vault), before)
         self.sync(expected=2)
-        for relative in (AGENTS, CLAUDE, TEMPLATE):
+        for relative in (AGENTS, CLAUDE, ONE_PAGER_AGENTS, ONE_PAGER_CLAUDE, TEMPLATE):
             self.assertTrue((self.vault / relative).read_bytes().endswith(b"LOCAL USER EDIT\n"))
 
     def test_deleted_managed_file_is_recreated(self):

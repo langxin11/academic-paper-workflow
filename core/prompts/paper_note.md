@@ -32,9 +32,13 @@ Citation 下放核心启发看板及阅读范围。导读抓住矛盾、机制�
 
 在配置的人工索引或专题中登记有效双链与简洁导读，标题或核心判断变化时更新原项。无法登记时进入固定“待补收录”；若该处也不能写，交付列出链接、动作及原因。正文与索引结果分别报告。用 `paper-flow --vault "<Vault>" index --note "<笔记相对路径>" --guide "<导读>"` 同时登记并刷新台账。已知材料缺口可用 `--backlog "<原因>"` 登记；用 `index --check` 核对台账。
 
-## 5. 按需附加交付
+## 5. 按需与有条件附加交付
 
-用户请求一图流时读取 `paper-flow show one-pager-prompt` 与 `paper-flow show one-pager-template`。制图不自动更改精读状态。
+**一图流触发条件**：满足以下任一条件时，读取 `paper-flow show one-pager-prompt` 与 `paper-flow show one-pager-template` 制作一图流（也可优先遵循目标 Vault 本地规约中的补充条件）：
+1. 用户显式要求一图流、单页速览或 graphical abstract；
+2. 精读完成复核后同时满足：`usefulness` 为 `高`、`status` 为 `done`，且论文具备清晰的方法或系统因果链（如控制、感知、RL、系统架构等；纯理论证明、纯综述或关键证据未闭环时不自动触发）。
+
+自动触发或用户要求嵌入时，将产物（`.typ`、`.svg`、`.png`、`one-pager-content.md` 及引用原图）保存至笔记同级 `assets/<paper-slug>/`，并在 Citation、核心启发看板与阅读范围之后自动插入或更新“文献一图流速览” Callout；若本机缺少 Typst 或中文字体导致渲染失败，保留源码并在交付中明确说明，不阻塞精读笔记交付。制图不自动更改精读状态。
 
 普通精读只读取原 PDF。只有明确要求给 PDF 加批注或划线时，才执行下面的写回流程。PDF 批注先读取 `paper-flow show colors`。使用 UTF-8 JSON 对象指定 `page_base` 和 `annotations`；每条列出 `id`、`page`、`quote`、`color`、`comment`。用物理页序从 1 编号时设置 `page_base: 1`。对重复引文补充 `before` / `after` 或区域 `region`。先执行 `paper-flow annotate --pdf "<PDF>" --json "<计划>" --check`，核对整批命中页与范围，再去掉 `--check` 提交。记录备份路径，复跑检查同一 ID 是否零新增；写入 PDF 内嵌下划线与评论。
 

@@ -7,6 +7,7 @@ from pathlib import Path
 VERSION = version("academic-paper-workflow")
 RESOURCES = {
     "agent-entry": "core/agent-entry.md",
+    "one-pager-entry": "core/one-pager-entry.md",
     "spec": "core/spec.md",
     "colors": "core/color_system.md",
     "checklist": "core/checklist.md",

@@ -41,11 +41,11 @@ uv run --project "$PAPER_FLOW_ENGINE" --locked paper-flow show note-prompt
 
 ### 入口与资源
 
-运行 `paper-flow sync --scope user` 将精读入口安装到当前用户。Codex 读取 `~/.agents/skills/paper-note/`，Claude Code 读取 `~/.claude/skills/paper-note/`，Antigravity 读取 `~/.gemini/config/skills/paper-note/`。同步清单在 `~/.paper-flow/user-manifest.json`。重启客户端后，从任意 Vault 调用精读，入口会给出本机引擎命令。
+运行 `paper-flow sync --scope user` 将精读与一图流入口安装到当前用户。Codex 读取 `~/.agents/skills/paper-note/` 与 `paper-one-pager/`，Claude Code 读取 `~/.claude/skills/paper-note/` 与 `paper-one-pager/`，Antigravity 读取 `~/.gemini/config/skills/paper-note/` 与 `paper-one-pager/`。同步清单在 `~/.paper-flow/user-manifest.json`。重启客户端后，从任意 Vault 调用精读或一图流，入口会给出本机引擎命令。
 
 共享仓库确有项目级需求时，使用 `paper-flow --vault "<Vault>" sync --scope project`。该模式会写入项目入口、正式模板和项目同步清单。
 
-通过 `paper-flow show --help` 查看资源名。常用项包括 `spec`、`note-prompt`、`checklist`、`note-template`、`import-template`、`colors`、`one-pager-prompt` 和 `one-pager-template`。
+通过 `paper-flow show --help` 查看资源名。常用项包括 `spec`、`note-prompt`、`checklist`、`note-template`、`import-template`、`colors`、`one-pager-entry`、`one-pager-prompt` 和 `one-pager-template`。精读满足 `usefulness: 高`、`status: done` 且具备清晰方法或系统因果链时，会自动生成并首屏嵌入一图流；也可随时显式调用 `/paper-one-pager`。
 
 
 ## 准备 PDF 与 MinerU 全文

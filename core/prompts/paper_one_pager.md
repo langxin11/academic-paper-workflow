@@ -1,6 +1,6 @@
 # 中文论文一图流任务
 
-仅在用户请求一图流、graphical abstract 或论文单页速览时执行；普通精读不自动触发。读取 `paper-flow show spec` 与 `paper-flow show one-pager-template`，复用已核查的笔记、原文证据及库内图片。展示页不是证据来源，不继承示例模板的假设或数值。
+在用户请求一图流／graphical abstract／论文单页速览，或精读同时满足高价值闭环条件（`usefulness: 高`、`status: done` 且具备清晰方法／系统因果链）时执行；未闭环或无清晰方法因果链的普通精读不自动触发。读取 `paper-flow show spec` 与 `paper-flow show one-pager-template`，复用已核查的笔记、原文证据及库内图片；若目标 Vault 配有本地视觉参考，按需对照其版式语言。展示页不是证据来源，不继承示例模板或视觉参考的假设与数值。
 
 ## 内容先行
 
@@ -37,7 +37,13 @@ PNG 为1920×1080。PDF仅按需导出。编译器缺失时交付源码及结构
 
 ## 归档、复核与交付
 
-默认放在来源笔记同级 `assets/<paper-slug>/`，含 `.typ`、`.svg`、`.png`、`one-pager-content.md` 及引用原图。用户要求嵌入笔记时，在 Citation、看板和阅读范围之后插入或更新一个“文献一图流速览” Callout，使用笔记相对图片路径；仅导出不修改笔记。
+默认放在来源笔记同级 `assets/<paper-slug>/`，含 `.typ`、`.svg`、`.png`、`one-pager-content.md` 及引用原图。当随精读条件自动触发或用户要求融入笔记时，在 Citation、核心启发看板和阅读范围之后插入或更新如下“文献一图流速览” Callout 块（使用笔记相对图片路径）；仅在用户明确“只导出图片”时不修改笔记：
+
+```markdown
+> [!NOTE] 文献一图流速览
+> ![文献方法、证据与边界](assets/<paper-slug>/one-pager.svg)
+> [PNG分享版](assets/<paper-slug>/one-pager.png)
+```
 
 实际编译后视觉检查：只有一页、16:9、无裁切/溢出/遮挡/破图/缺字、公式上下标完整、960×540仍能辨识核心结论、箭头与原文因果一致；SVG图像嵌入或路径可解析、文字可迁移。溢出先删重复语句、缩短标题、调整图文比例，再调字号。
 
