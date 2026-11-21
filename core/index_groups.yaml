@@ -1,21 +1,37 @@
-# Legacy Vault project aliases; override or extend with index.group_aliases.
+# Canonical 6 project buckets + legacy aliases for deterministic total ledger grouping.
 tactile-grasping: 触觉抓取与力控
 tactile-force-control: 触觉抓取与力控
 tactile-friction-control: 触觉抓取与力控
 grasping-force-control: 触觉抓取与力控
 gentle-grasping: 触觉抓取与力控
-tactile-force-aware-robot-learning: 触觉学习
-tactile-embodied: 触觉学习
-teleoperation-rl: 触觉学习
+触觉力控与滑移（平行夹爪手内操作）: 触觉抓取与力控
+刚度估计: 触觉抓取与力控
+
 tactile-representation: 触觉感知与表征
 tactile-perception: 触觉感知与表征
 tactile-sensing: 触觉感知与表征
-active-disturbance-rejection-control: ADRC 与执行器控制
-force-perception-and-actuation: ADRC 与执行器控制
-sim-to-real-manipulation: 仿真、基准与 sim-to-real
-contact-rich-manipulation-and-simulation: 仿真、基准与 sim-to-real
-rl-infrastructure: 仿真、基准与 sim-to-real
-dexterous-benchmark: 仿真、基准与 sim-to-real
-motion-planning: 运动规划
-multi-robot-motion-planning: 运动规划
-gripper-mechanism-design: 机构设计
+tactile-sensing-and-manipulation: 触觉感知与表征
+触觉感知与操作: 触觉感知与表征
+
+tactile-force-aware-robot-learning: 接触丰富操作学习
+tactile-embodied: 接触丰富操作学习
+teleoperation-rl: 接触丰富操作学习
+触觉学习: 接触丰富操作学习
+平行夹爪手内操作与接触控制（潜在关联）: 接触丰富操作学习
+
+sim-to-real-manipulation: 仿真、基准与Sim2Real
+contact-rich-manipulation-and-simulation: 仿真、基准与Sim2Real
+rl-infrastructure: 仿真、基准与Sim2Real
+dexterous-benchmark: 仿真、基准与Sim2Real
+仿真、基准与 sim-to-real: 仿真、基准与Sim2Real
+
+active-disturbance-rejection-control: 机器人控制与机构
+force-perception-and-actuation: 机器人控制与机构
+motion-planning: 机器人控制与机构
+multi-robot-motion-planning: 机器人控制与机构
+gripper-mechanism-design: 机器人控制与机构
+ADRC 与执行器控制: 机器人控制与机构
+运动规划: 机器人控制与机构
+机构设计: 机器人控制与机构
+双臂力控与触觉仿真平台搭建: 机器人控制与机构
+机器人控制框架与人机协作开发: 机器人控制与机构
